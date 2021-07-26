@@ -33,7 +33,6 @@ class BugsnagFlutterPlugin: FlutterPlugin, MethodCallHandler {
   override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
     when {
       call.method == "configure" -> {
-        val config = Configuration.load(context)
         val apiKey = call.argument<String>("androidApiKey")
         val releaseStage = call.argument<String>("releaseStage")
 
@@ -41,12 +40,14 @@ class BugsnagFlutterPlugin: FlutterPlugin, MethodCallHandler {
           result.success(false)
           return
         }
-        config.apiKey = apiKey!!
+
+        val config = Configuration(apiKey!!)
 
         if (releaseStage != null) {
           config.releaseStage = releaseStage!!
         }
 
+        println("Starting Bugsnag")
         Bugsnag.start(context, config)
         configured = true
         result.success(true)
