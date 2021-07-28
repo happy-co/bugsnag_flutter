@@ -39,14 +39,14 @@ class BugsnagFlutterPlugin: FlutterPlugin, MethodCallHandler {
         val config: Configuration = try {
           Configuration.load(context)
         } catch (e: Throwable) {
-          if (apiKey == null || apiKey == "") {
+          if (apiKey.isNullOrBlank()) {
             result.success(false)
             return
           }
           Configuration(apiKey)
         }
 
-        if (apiKey != null && apiKey != "") {
+        if (!apiKey.isNullOrBlank()) {
           config.apiKey = apiKey
         }
 
