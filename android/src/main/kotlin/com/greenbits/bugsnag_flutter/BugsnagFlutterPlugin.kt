@@ -33,15 +33,22 @@ class BugsnagFlutterPlugin: FlutterPlugin, MethodCallHandler {
   override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
     when {
       call.method == "configure" -> {
-        val config = Configuration.load(context)
         val apiKey = call.argument<String>("androidApiKey")
         val releaseStage = call.argument<String>("releaseStage")
 
-        if (apiKey == null) {
-          result.success(false)
-          return
+        val config: Configuration = try {
+          Configuration.load(context)
+        } catch (e: Throwable) {
+          if (apiKey.isNullOrBlank()) {
+            result.success(false)
+            return
+          }
+          Configuration(apiKey)
         }
-        config.apiKey = apiKey!!
+
+        if (!apiKey.isNullOrBlank()) {
+          config.apiKey = apiKey
+        }
 
         if (releaseStage != null) {
           config.releaseStage = releaseStage!!
