@@ -36,18 +36,24 @@ class BugsnagFlutterPlugin: FlutterPlugin, MethodCallHandler {
         val apiKey = call.argument<String>("androidApiKey")
         val releaseStage = call.argument<String>("releaseStage")
 
-        if (apiKey == null) {
-          result.success(false)
-          return
+        val config: Configuration = try {
+          Configuration.load(context)
+        } catch (e: Throwable) {
+          if (apiKey == null || apiKey == "") {
+            result.success(false)
+            return
+          }
+          Configuration(apiKey)
         }
 
-        val config = Configuration(apiKey!!)
+        if (apiKey != null && apiKey != "") {
+          config.apiKey = apiKey
+        }
 
         if (releaseStage != null) {
           config.releaseStage = releaseStage!!
         }
 
-        println("Starting Bugsnag")
         Bugsnag.start(context, config)
         configured = true
         result.success(true)
