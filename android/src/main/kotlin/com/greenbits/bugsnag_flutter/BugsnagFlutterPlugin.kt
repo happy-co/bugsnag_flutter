@@ -60,29 +60,29 @@ class BugsnagFlutterPlugin: FlutterPlugin, MethodCallHandler {
           val additionalStackTrace = call.argument<String>("additionalStackTrace")
 
           val stackTrace = call.argument<List<HashMap<String, Any?>>>("stackTrace")!!
-          val exception = Exception(name, Throwable(description));
 
-          Bugsnag.notify(exception, { event: Event ->
+          val throwable = Throwable(name)
+          val flutterStackTrace = ArrayList<StackTraceElement>()
+          for (flutterFrame in stackTrace) {
+            flutterStackTrace.add(StackTraceElement("", flutterFrame["method"] as? String, flutterFrame["file"] as? String, flutterFrame["lineNumber"] as? Int ?: 0))
+          }
+          throwable.stackTrace = flutterStackTrace.toTypedArray()
+
+          Bugsnag.notify(throwable, { event: Event ->
             event.addMetadata("Flutter", "Context", context)
             event.addMetadata("Flutter", "Full Error", fullOutput)
             if (additionalStackTrace != null) {
               event.addMetadata("Flutter", "StackTrace", additionalStackTrace);
             }
 
-            // We can't assign to stacktrace so we can't remove items from it.
-            // This replaces as many lines as possible with the Flutter output
-            val stackSizeIndexed = event.errors[0].stacktrace.size - 1
+            event.errors[0].errorClass = name
+
             for (frame in event.errors[0].stacktrace) {
               val index = event.errors[0].stacktrace.indexOf(frame)
 
-              if (stackSizeIndexed >= index) {
-                val flutterFrame = stackTrace[index]
-                frame.file = flutterFrame["file"] as? String
-                frame.inProject = flutterFrame["inProject"] as? Boolean
-                frame.lineNumber = flutterFrame["lineNumber"] as? Int
-                frame.columnNumber = flutterFrame["columnNumber"] as? Int
-                frame.method = flutterFrame["method"] as? String
-              }
+              val flutterFrame = stackTrace[index]
+              frame.inProject = flutterFrame["inProject"] as? Boolean
+              frame.columnNumber = flutterFrame["columnNumber"] as? Int
             }
             true
           })
